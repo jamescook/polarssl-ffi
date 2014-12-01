@@ -177,22 +177,39 @@ module PolarSSL
   attach_function :ctr_drbg_self_test, [ :int ],  :int
 
   # Returns a pointer which must be passed to Cipher::CipherInfo
-  attach_function :cipher_info_from_string, [ :string ], Cipher::CipherInfo
+  attach_function :cipher_info_from_string,
+    [ :string ], # e.g. 'AES-192-CTR'
+    Cipher::CipherInfo
 
   # Params: pointers to CipherContext and CipherInfo
-  attach_function :cipher_init_ctx, [ :pointer, :pointer ], :int
+  attach_function :cipher_init_ctx,
+    [ :pointer,
+      :pointer ],
+    :int # zero for success, error otherwise
 
-  # Pass bytes as a string (SecureRandom.random_bytes(16)
-  attach_function :cipher_reset, [ :string ], :int
+  attach_function :cipher_reset,
+    [ :string ], # e.g. base64 encoded bytes as a string Base64.encode64(SecureRandom.random_bytes(16))
+    :int
 
-  # Params: context, string key, key length and mode (encrypt/decrypt)
-  attach_function :cipher_setkey, [ :pointer, :string, :int, Operation ], :int
+  attach_function :cipher_setkey,
+    [ :pointer,    # instance of CipherContext
+      :string,     # string key
+      :int,        # key length in bits
+      Operation ], # enum. See Operation definition
+    :int
 
-  # Params: context pointer, input, length of input, output pointer, output length accumulator
-  attach_function :cipher_update, [ :pointer, :string, :size_t, :pointer, :pointer ], :int
+  attach_function :cipher_update,
+    [ :pointer,   # instance of CipherContext
+      :string,    # string cipher text
+      :size_t,    # length of cipher text
+      :pointer,   # pointer where encrypted bytes are written
+      :pointer ], # pointer where length of encrypted bytes is updated
+    :int
 
-  # Params: context pointer, output pointer, output length accumulator
-  attach_function :cipher_finish, [ :pointer, :pointer, :pointer ], :int
-
+  attach_function :cipher_finish,
+    [ :pointer,   # instance of CipherContext
+      :pointer,   # pointer where encrypted bytes are written
+      :pointer ], # pointer where length of encrypted bytes is updated
+   :int
 end
 
