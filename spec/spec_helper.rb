@@ -1,4 +1,4 @@
-require 'pry'
+#require 'pry'
 require_relative '../lib/polarssl.rb'
 
 RSpec.configure do |config|

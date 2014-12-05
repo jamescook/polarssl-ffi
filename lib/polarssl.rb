@@ -88,6 +88,7 @@ module PolarSSL
     SSL_VERIFY_NONE     = 0
     SSL_VERIFY_OPTIONAL = 1
     SSL_VERIFY_REQUIRED = 2
+
   end
 
   class Cipher
@@ -126,26 +127,6 @@ module PolarSSL
     end
   end
 
-  class CtrDrbg
-    class AesContext < ::FFI::Struct 
-      layout :nr,  :int,
-             :rk,  :uint32,
-             :buf, :uint32 
-    end
-
-    class CtrDrbgContext < ::FFI::Struct
-      layout :counter,               :uint16,
-             :reseed_counter,        :int,
-             :prediction_resistance, :int,
-             :entropy_len,           :size_t,
-             :reseed_interval,       :int,
-             :aes_context,           AesContext,
-             :f_entropy,             :int,
-             :p_entropy,             :pointer
-    end
-
-  end
-
   class Entropy
     class SourceState < ::FFI::Struct
       layout :f_source, :pointer,
@@ -168,6 +149,26 @@ module PolarSSL
            :source_count,  :int,
            :source_state, SourceState
     end
+  end
+
+  class CtrDrbg
+    class AesContext < ::FFI::Struct 
+      layout :nr,  :int,
+             :rk,  :uint32,
+             :buf, :uint32 
+    end
+
+    class CtrDrbgContext < ::FFI::Struct
+      layout :counter,               :uint16,
+             :reseed_counter,        :int,
+             :prediction_resistance, :int,
+             :entropy_len,           :size_t,
+             :reseed_interval,       :int,
+             :aes_context,           AesContext,
+             :f_entropy,             :int,
+             :p_entropy,             ::PolarSSL::Entropy::EntropyContext
+    end
+
   end
 
   #attach_function :entropy_init,  [ Entropy::EntropyContext ], :void
@@ -210,6 +211,45 @@ module PolarSSL
     [ :pointer,   # instance of CipherContext
       :pointer,   # pointer where encrypted bytes are written
       :pointer ], # pointer where length of encrypted bytes is updated
-   :int
+    :int
+
+  attach_function :ssl_init,
+    [ :pointer ], # ssl context
+    :int
+
+  attach_function :ssl_free,
+    [ :pointer ], # ssl context
+    :void
+
+  attach_function :ssl_set_endpoint,
+    [ :pointer, # ssl context
+      :int ],   # Endpoint type (1 for client)
+    :void
+
+  attach_function :ssl_set_authmode,
+    [ :pointer, # ssl context
+      :int ],   # authmode
+    :void
+
+  attach_function :ssl_set_rng,
+    [ :pointer,   # ssl context
+      :pointer,   # rng function (ctr drbg)
+      :pointer ], # rng param ?
+    :void
+    
 end
 
+
+if PolarSSL.ffi_libraries.last.find_function 'ssl_set_session'
+  PolarSSL.attach_function :ssl_set_session,
+    [ :pointer, # ssl context
+      :pointer, # ssl session
+    ],
+  :int
+
+  PolarSSL.attach_function :ssl_set_ciphersuites,
+    [ :pointer, # ssl context
+      :pointer, # ciphersuites
+    ],
+  :int
+end
